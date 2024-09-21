@@ -1,0 +1,71 @@
+﻿@page "/"
+
+@using WhatsRedirect.Entity
+@inject NavigationManager _navigation
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="margin-top">
+    <MudPaper Class="pa-4">
+
+        <MudSelect @bind-Value="value" @bind-SelectedValues="options" Label="Country" Variant="Variant.Outlined">
+            @foreach (var country in countryList.Countries)
+            {
+                <MudSelectItem Value="@country.Description">
+                    <MudImage Src="@country.Image" Size="Size.Small" />
+                    @country.Description
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField @bind-Value="phoneNumber" Label="Phone Number" Variant="Variant.Outlined" />
+
+        <div class="vertical-space"></div>
+
+        <MudButton OnClick="RedirectToWhatsApp" Variant="Variant.Filled"
+                   EndIcon="@Icons.Material.Filled.Send" Color="Color.Success" Size="Size.Large" Class="full-width-button">
+            Post API Whats
+        </MudButton>
+
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private CountryList countryList = new CountryList();
+
+    private string value = "Brasil (55)";
+    private IEnumerable<string> options { get; set; } = new HashSet<string> { "Brasil (55)" };
+
+    private string phoneNumber;
+
+    private async void RedirectToWhatsApp()
+    {
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            OpenDialog("Phone number is required.");
+            return;
+        }
+
+        var ddi = countryList.Countries.FirstOrDefault(x => x.Description == value).DDI;
+
+        var url = $"https://api.whatsapp.com/send/?phone={ddi}{phoneNumber}";
+        _navigation.NavigateTo(url, true);
+    }
+
+    private void OpenDialog(string msg)
+    {
+        var messageBoxOptions = new MessageBoxOptions
+            {
+                Message = msg,
+                YesText = "OK"
+            };
+
+        var dialogOptions = new DialogOptions
+            {
+                Position = DialogPosition.Center,
+                CloseOnEscapeKey = true,
+                BackdropClick = false
+            };
+
+        DialogService.ShowMessageBox(messageBoxOptions, dialogOptions);
+    }
+}
